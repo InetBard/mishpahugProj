@@ -12,7 +12,7 @@ import telran.ashkelon2018.mishpahug.dto.NewEventDto;
 import telran.ashkelon2018.mishpahug.dto.NotificationDto;
 
 @Service
-public class MishpahugServiceImpl implements MishpahugService {
+public class EventServiceImpl implements EventService {
 
 	@Override
 	public String getStaticFieldsForProfileForm() {

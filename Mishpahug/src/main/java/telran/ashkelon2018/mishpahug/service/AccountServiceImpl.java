@@ -54,7 +54,7 @@ public class AccountServiceImpl implements AccountService{
 				.builder()
 				.email(credentials.getEmail())
 				.password(hashPassword)
-				.role("User")
+				.role("ROLE_USER")
 				.expdate(LocalDateTime.now().plusDays(accountConfiguration.getExpPeriod())).build();
 		userRepository.save(userAccount);
 		return new ResponseRegisrtationDto();
@@ -79,7 +79,7 @@ public class AccountServiceImpl implements AccountService{
 	public UserProfileDto login(String token) {
 		UserAccount tmpUser = checkUserInRepo(token);
 		for (Field field : tmpUser.getClass().getFields()) {
-			if (!field.equals(null)) {
+			if (field.getName().equals("email") && !field.equals(null)) {
 				return convertToUserProfileDto(tmpUser);
 			}
 		}

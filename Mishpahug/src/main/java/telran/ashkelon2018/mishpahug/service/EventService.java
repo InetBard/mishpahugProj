@@ -9,7 +9,7 @@ import telran.ashkelon2018.mishpahug.dto.FullEventInPOrPDto;
 import telran.ashkelon2018.mishpahug.dto.NewEventDto;
 import telran.ashkelon2018.mishpahug.dto.NotificationDto;
 
-public interface MishpahugService {
+public interface EventService {
 //	UnAuthorized requests
 //	+++++++++++++++++++++++++++++++++++++++++
 //	GET
