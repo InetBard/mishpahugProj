@@ -43,7 +43,7 @@ public class AccountServiceImpl implements AccountService{
 	@Override
 	public ResponseRegisrtationDto addUser(String token) {
 		AccountUserCredentials credentials = accountConfiguration.tokenDecode(token);
-		if (validateEmail(credentials.getEmail()) == false) {
+		if (validateEmail(credentials.getEmail()) == false || validatePassword(credentials.getPassword()) == false) {
 			throw new UserUnprocessableEntity();
 		}
 		if (userRepository.existsById(credentials.getEmail())) {
@@ -161,7 +161,8 @@ public class AccountServiceImpl implements AccountService{
 	
 	private UserAccount checkUserInRepo(String token) {
 		AccountUserCredentials credentials = accountConfiguration.tokenDecode(token);
-		UserAccount userAccount = userRepository.findById(credentials.getEmail()).orElseThrow(() -> new UserUnauthorizedException());
+		UserAccount userAccount = userRepository.findById(credentials.getEmail()).orElseThrow(
+				() -> new UserUnauthorizedException());
 		// FIXME need to change with real security method with sult checking
 		if (!userAccount.getPassword().equals(credentials.getPassword())) {
 			throw new UserUnauthorizedException();
