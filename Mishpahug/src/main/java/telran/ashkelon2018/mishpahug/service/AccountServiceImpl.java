@@ -64,35 +64,28 @@ public class AccountServiceImpl implements AccountService{
 	@Override
 	public UserProfileDto editUser(UserProfileDto userProfileDto, String token) {
 		UserAccount userAccount = checkUserInRepo(token);
+		UserProfileDto userProfile = null;
 		for (Field field : userAccount.getClass().getFields()) {
 			if (field.getName().equals("email") && !field.equals(null)) {
-				userRepository.save(convertProfileToUserAccount(userAccount,userProfileDto));
+				userProfile = convertToUserProfileDto(
+						userRepository.save(
+								convertProfileToUserAccount(userAccount,userProfileDto)));
 			}
 		}
-		return convertToUserProfileDto(userAccount);
+		return userProfile;
 	}
 
-	private UserAccount convertProfileToUserAccount(UserAccount userAccount, UserProfileDto userProfileDto) {
-		userAccount.setFirstName(userProfileDto.getFirstName());
-		userAccount.setLastName(userProfileDto.getLastName());
-		userAccount.setConfession(userProfileDto.getConfession());
-		userAccount.setDateOfBirth(userProfileDto.getDateOfBirth());
-		userAccount.setDescription(userProfileDto.getDescription());
-		userAccount.setEmail(userAccount.getEmail());//we can use the same email because we already check this early
-		userAccount.setExpdate(userAccount.getExpdate());
-		userAccount.setFoodPreferences(userProfileDto.getFoodPreferences());
-		userAccount.setGender(userProfileDto.getGender());
-		userAccount.setLanguages(userProfileDto.getLanguages());
-		userAccount.setMaritalStatus(userProfileDto.getMaritalStatus());
-		userAccount.setPhoneNumber(userProfileDto.getPhoneNumber());
-		userAccount.setNumberOfVoters(userProfileDto.getNumberOfVoters());
-		userAccount.setPictureLink(userProfileDto.getPictureLink());
-		userAccount.setRate(userProfileDto.getRate());
-		userAccount.setRoles(userAccount.getRoles());
-		return userAccount;
+	@Override
+	public UserProfileDto login(String token) {
+		UserAccount tmpUser = checkUserInRepo(token);
+		for (Field field : tmpUser.getClass().getFields()) {
+			if (!field.equals(null)) {
+				return convertToUserProfileDto(tmpUser);
+			}
+		}
+		throw new UserConflictException();
 	}
-
-
+	
 	@Override
 	public UserProfileDto removeUser(String login, String token) {
 		// TODO Auto-generated method stub
@@ -123,14 +116,10 @@ public class AccountServiceImpl implements AccountService{
 		return null;
 	}
 
-	@Override
-	public UserProfileDto login(String token) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-//*******************************************************
-//System methods
 	
+//******************************************************************************
+//System methods
+//******************************************************************************	
 	private UserProfileDto convertToUserProfileDto(UserAccount userAccount) {
 		return UserProfileDto
 				.builder()
@@ -177,6 +166,26 @@ public class AccountServiceImpl implements AccountService{
 		if (!userAccount.getPassword().equals(credentials.getPassword())) {
 			throw new UserUnauthorizedException();
 		}
+		return userAccount;
+	}
+	
+	private UserAccount convertProfileToUserAccount(UserAccount userAccount, UserProfileDto userProfileDto) {
+		userAccount.setFirstName(userProfileDto.getFirstName());
+		userAccount.setLastName(userProfileDto.getLastName());
+		userAccount.setConfession(userProfileDto.getConfession());
+		userAccount.setDateOfBirth(userProfileDto.getDateOfBirth());
+		userAccount.setDescription(userProfileDto.getDescription());
+		userAccount.setEmail(userAccount.getEmail());//we can use the same email because we already check this early
+		userAccount.setExpdate(userAccount.getExpdate());
+		userAccount.setFoodPreferences(userProfileDto.getFoodPreferences());
+		userAccount.setGender(userProfileDto.getGender());
+		userAccount.setLanguages(userProfileDto.getLanguages());
+		userAccount.setMaritalStatus(userProfileDto.getMaritalStatus());
+		userAccount.setPhoneNumber(userProfileDto.getPhoneNumber());
+		userAccount.setNumberOfVoters(userProfileDto.getNumberOfVoters());
+		userAccount.setPictureLink(userProfileDto.getPictureLink());
+		userAccount.setRate(userProfileDto.getRate());
+		userAccount.setRoles(userAccount.getRoles());
 		return userAccount;
 	}
 }
