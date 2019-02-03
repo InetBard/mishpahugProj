@@ -12,14 +12,12 @@ public interface AccountService {
 //	POST 
 //	Registration User
 	
-	/*UserProfileDto*/ResponseRegisrtationDto addUser(String token);
+	/*UserProfileDto*/ResponseRegisrtationDto registrationUser(String token);
 	
 //	POST
 //	Update User Profile
 	
 	UserProfileDto editUser(UserProfileDto userProfileDto, String token);
-
-	UserProfileDto removeUser(String login, String token);
 
 	Set<String> addRole(String login, String role, String token);
 
@@ -28,8 +26,8 @@ public interface AccountService {
 	void changePassword(String password, String token);
 //	GET
 //	User Profile
-	UserProfileDto getUser(String login);
+	UserProfileDto getUserProfile(String login);
 //	POST 
 //	Login User
-	UserProfileDto login(String token);
+	UserProfileDto loginUser(String token);
 }

@@ -1,8 +1,8 @@
 package telran.ashkelon2018.mishpahug.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,17 +19,17 @@ public class AccountUserController {
 	AccountService accountService;
 	
 	@PostMapping("/registration")
-	public ResponseRegisrtationDto addUser(@RequestHeader("Authorization") String token) {
-		return accountService.addUser(token);
+	public ResponseRegisrtationDto registrationUser(@RequestHeader("Authorization") String token) {
+		return accountService.registrationUser(token);
 	}
 	
-	@PostMapping("/login/{login}")
-	public UserProfileDto login(@PathVariable String token) {
-		return accountService.login(token);
+	@PostMapping("/login")
+	public UserProfileDto loginUser(@RequestHeader("Authorization") String token) {
+		return accountService.loginUser(token);
 	}
 
 	@PostMapping("/profile")
-	UserProfileDto editUser(UserProfileDto userProfileDto, String token) {
+	UserProfileDto updateUserProfile(@RequestBody UserProfileDto userProfileDto, @RequestHeader("Authorization") String token) {
 		return accountService.editUser(userProfileDto, token);
 	}
 //

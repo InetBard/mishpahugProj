@@ -7,18 +7,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mindrot.jbcrypt.BCrypt;
-import org.omg.CORBA.PRIVATE_MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
-import telran.ashkelon2018.mishpahug.api.Confession;
-import telran.ashkelon2018.mishpahug.api.Directory;
 import telran.ashkelon2018.mishpahug.configuration.AccountConfiguration;
 import telran.ashkelon2018.mishpahug.configuration.AccountUserCredentials;
 import telran.ashkelon2018.mishpahug.dao.UserAccountRepository;
 import telran.ashkelon2018.mishpahug.domain.UserAccount;
 import telran.ashkelon2018.mishpahug.dto.ResponseRegisrtationDto;
+import telran.ashkelon2018.mishpahug.dto.Roles;
 import telran.ashkelon2018.mishpahug.dto.UserProfileDto;
 import telran.ashkelon2018.mishpahug.exceptions.UserConflictException;
 import telran.ashkelon2018.mishpahug.exceptions.UserUnauthorizedException;
@@ -37,24 +34,28 @@ public class AccountServiceImpl implements AccountService{
 		    Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
 	public static final Pattern VALIDATE_PASSWORD = 
-			Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
+			Pattern.compile("\\A(?=\\S*[0-9])(?=\\S*[a-z])(?=\\S*[A-Z])(?=\\S*[@#$%^&+=])\\S{8,}\\z",
 					Pattern.CASE_INSENSITIVE);
 	
 	@Override
-	public ResponseRegisrtationDto addUser(String token) {
+	public ResponseRegisrtationDto registrationUser (String token) {
 		AccountUserCredentials credentials = accountConfiguration.tokenDecode(token);
-		if (validateEmail(credentials.getEmail()) == false || validatePassword(credentials.getPassword()) == false) {
+		if (validateEmail(credentials.getEmail()) == false) //|| validatePassword(credentials.getPassword()) == false) {
 			throw new UserUnprocessableEntity();
-		}
+//		}
 		if (userRepository.existsById(credentials.getEmail())) {
 			throw new UserConflictException("User exists!");
 		}
 		String hashPassword = BCrypt.hashpw(credentials.getPassword(), BCrypt.gensalt());
+		String[] pictureAndBanner = new String[2];
+		pictureAndBanner[0] = "";
+		pictureAndBanner[1] = "";
 		UserAccount userAccount = UserAccount
 				.builder()
 				.email(credentials.getEmail())
 				.password(hashPassword)
 				.role("ROLE_USER")
+				.pictureLink(pictureAndBanner)
 				.expdate(LocalDateTime.now().plusDays(accountConfiguration.getExpPeriod())).build();
 		userRepository.save(userAccount);
 		return new ResponseRegisrtationDto();
@@ -64,33 +65,55 @@ public class AccountServiceImpl implements AccountService{
 	@Override
 	public UserProfileDto editUser(UserProfileDto userProfileDto, String token) {
 		UserAccount userAccount = checkUserInRepo(token);
-		UserProfileDto userProfile = null;
-		for (Field field : userAccount.getClass().getFields()) {
-			if (field.getName().equals("email") && !field.equals(null)) {
-				userProfile = convertToUserProfileDto(
-						userRepository.save(
-								convertProfileToUserAccount(userAccount,userProfileDto)));
+//		convertProfileToUserAccount(userAccount, userProfileDto);
+			if(userProfileDto.getFirstName() != null) {
+				userAccount.setFirstName(userProfileDto.getFirstName());
+			}else{
+				throw new UserUnprocessableEntity();
 			}
-		}
-		return userProfile;
+			if(userProfileDto.getDateOfBirth() != null) {
+			userAccount.setDateOfBirth(userProfileDto.getDateOfBirth());
+			}
+			if(userProfileDto.getGender() != null) {
+			userAccount.setGender(userProfileDto.getGender());
+			}
+			if(userProfileDto.getMaritalStatus() != null) {
+			userAccount.setMaritalStatus(userProfileDto.getMaritalStatus());
+			}
+			if(userProfileDto.getConfession() != null) {
+			userAccount.setConfession(userProfileDto.getConfession());
+			}
+			if(userProfileDto.getLastName() != null) {
+			userAccount.setLastName(userProfileDto.getLastName());
+			}
+			if(userProfileDto.getPictureLink() != null) {
+			userAccount.setPictureLink(userProfileDto.getPictureLink());
+			}
+			if(userProfileDto.getPhoneNumber() != null) {
+			userAccount.setPhoneNumber(userProfileDto.getPhoneNumber());
+			}
+			if(userProfileDto.getFoodPreferences() != null) {
+			userAccount.setFoodPreferences(userProfileDto.getFoodPreferences());
+			}
+			if(userProfileDto.getLanguages() != null) {
+			userAccount.setLanguages(userProfileDto.getLanguages());
+			}
+			if(userProfileDto.getDescription() != null) {
+			userAccount.setDescription(userProfileDto.getDescription());
+			}
+			userRepository.save(userAccount);
+		return convertToUserProfileDto(userAccount);
 	}
 
 	@Override
-	public UserProfileDto login(String token) {
+	public UserProfileDto loginUser (String token) {
 		UserAccount tmpUser = checkUserInRepo(token);
-		for (Field field : tmpUser.getClass().getFields()) {
-			if (field.getName().equals("email") && !field.equals(null)) {
-				return convertToUserProfileDto(tmpUser);
-			}
-		}
+		if (tmpUser!=null) {
+			return convertToUserProfileDto(tmpUser);	
+		}		
 		throw new UserConflictException();
 	}
 	
-	@Override
-	public UserProfileDto removeUser(String login, String token) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public Set<String> addRole(String login, String role, String token) {
@@ -111,9 +134,13 @@ public class AccountServiceImpl implements AccountService{
 	}
 
 	@Override
-	public UserProfileDto getUser(String login) {
-		// TODO Auto-generated method stub
-		return null;
+	public UserProfileDto getUserProfile(String token) {
+		UserAccount userAccount = checkUserInRepo(token);
+		if (userAccount!=null) {
+			return convertToUserProfileDto(userAccount);	
+		}		
+		throw new UserConflictException();
+		
 	}
 
 	
@@ -159,18 +186,21 @@ public class AccountServiceImpl implements AccountService{
 		 */
 	}
 	
-	private UserAccount checkUserInRepo(String token) {
+	public UserAccount checkUserInRepo(String token) {
 		AccountUserCredentials credentials = accountConfiguration.tokenDecode(token);
 		UserAccount userAccount = userRepository.findById(credentials.getEmail()).orElseThrow(
-				() -> new UserUnauthorizedException());
-		// FIXME need to change with real security method with sult checking
-		if (!userAccount.getPassword().equals(credentials.getPassword())) {
-			throw new UserUnauthorizedException();
+				()-> new UserUnauthorizedException());
+		if(userAccount.getRoles().contains(Roles.USER_EMPTY_PROFILE.name())) {
+			throw new UserConflictException("User has empty profile!");
 		}
+		// FIXME need to change with real security method with sult checking
+//		if (!userAccount.getPassword().equals(credentials.getPassword())) {
+//			throw new UserUnauthorizedException();
+//		}
 		return userAccount;
 	}
 	
-	private UserAccount convertProfileToUserAccount(UserAccount userAccount, UserProfileDto userProfileDto) {
+	public UserAccount convertProfileToUserAccount(UserAccount userAccount, UserProfileDto userProfileDto) {
 		userAccount.setFirstName(userProfileDto.getFirstName());
 		userAccount.setLastName(userProfileDto.getLastName());
 		userAccount.setConfession(userProfileDto.getConfession());
@@ -188,5 +218,23 @@ public class AccountServiceImpl implements AccountService{
 		userAccount.setRate(userProfileDto.getRate());
 		userAccount.setRoles(userAccount.getRoles());
 		return userAccount;
+	}
+	
+	public boolean checkFieldsOnNull(UserAccount tmpUser) {
+		Field[] fields = tmpUser.getClass().getDeclaredFields();
+		for (Field field : fields) {
+			field.setAccessible(true);
+			try {
+				String res = (String)field.get(tmpUser).toString();
+				if (res.equals("") || res == null) {
+					throw new UserUnprocessableEntity();
+				}
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+		return true;
 	}
 }

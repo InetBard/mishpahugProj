@@ -35,7 +35,6 @@ public class UserAccount {
 		String maritalStatus;
 		String confession;
 		String[] pictureLink;
-		
 		String phoneNumber;//FIXME type of field
 		Set<String> foodPreferences;
 		Set<String> languages;
